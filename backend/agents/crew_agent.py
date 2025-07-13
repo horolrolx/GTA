@@ -1,5 +1,6 @@
 from crewai import Agent, Task, Crew
 import os
+from .weather_agent import weather_agent
 
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
@@ -58,30 +59,38 @@ food_agent = Agent(
 )
 
 def get_travel_plan_with_crew(data):
-    # 1. 이동수단 추천
+    # 1. 날씨 정보 분석 (최우선)
+    weather_task = Task(
+        name="weather",
+        description=f"목적지: {data.get('destination', '')}, 여행 기간: {data.get('start_date', '')} ~ {data.get('end_date', '')}, 인원수: {data.get('people', '')}, 여행 목적/특이사항: {data.get('purpose', '')}\n여행 기간 동안의 날씨를 분석하고 옷차림 및 준비물을 추천해줘.",
+        agent=weather_agent,
+        expected_output="날짜별 날씨 예보, 추천 옷차림, 필수 준비물이 표로 정리된 결과"
+    )
+    
+    # 2. 이동수단 추천
     transport_task = Task(
         name="transport",
         description=f"출발지: {data.get('departure', '')}, 목적지: {data.get('destination', '')}, 예산: {data.get('budget', '')}만원, 인원수: {data.get('people', '')}, 여행 목적/특이사항: {data.get('purpose', '')}\n이 정보를 바탕으로 추천 이동수단(항공, 기차, 버스 등)을 간단히 안내해줘.",
         agent=transport_agent,
         expected_output="추천 교통수단, 예상 소요 시간, 비용, 장단점이 표로 정리된 결과"
     )
-    # 2. 숙소 추천 (이동수단 결과 참고)
+    # 3. 숙소 추천 (날씨, 이동수단 결과 참고)
     hotel_task = Task(
         name="hotel",
-        description=f"목적지: {data.get('destination', '')}, 예산: {data.get('budget', '')}만원, 인원수: {data.get('people', '')}, 여행 목적/특이사항: {data.get('purpose', '')}\n이동수단 정보도 참고해서 추천 숙소 2~3곳을 안내해줘.",
+        description=f"목적지: {data.get('destination', '')}, 예산: {data.get('budget', '')}만원, 인원수: {data.get('people', '')}, 여행 목적/특이사항: {data.get('purpose', '')}\n날씨 정보와 이동수단 정보도 참고해서 추천 숙소 2~3곳을 안내해줘.",
         agent=hotel_agent,
         expected_output="추천 숙소 리스트, 위치, 가격대, 편의시설, 객실 타입이 표로 정리된 결과",
-        depends_on=[transport_task]
+        depends_on=[weather_task, transport_task]
     )
-    # 3. 일정 생성 (숙소/이동수단 결과 참고)
+    # 4. 일정 생성 (날씨, 숙소, 이동수단 결과 참고)
     plan_task = Task(
         name="plan",
-        description=f"목적지: {data.get('destination', '')}, 여행 기간: {data.get('start_date', '')} ~ {data.get('end_date', '')}, 인원수: {data.get('people', '')}, 여행 목적/특이사항: {data.get('purpose', '')}\n이동수단, 숙소 정보를 참고해서 1일 단위로 여행 일정을 안내해줘.",
+        description=f"목적지: {data.get('destination', '')}, 여행 기간: {data.get('start_date', '')} ~ {data.get('end_date', '')}, 인원수: {data.get('people', '')}, 여행 목적/특이사항: {data.get('purpose', '')}\n날씨, 이동수단, 숙소 정보를 참고해서 1일 단위로 여행 일정을 안내해줘.",
         agent=plan_agent,
         expected_output="1일 단위 여행 일정, 각 일정별 소요 시간, 추천 이유, 참고 팁이 표로 정리된 결과",
-        depends_on=[hotel_task, transport_task]
+        depends_on=[weather_task, hotel_task, transport_task]
     )
-    # 4. 맛집 추천 (일정 결과 참고)
+    # 5. 맛집 추천 (일정 결과 참고)
     food_task = Task(
         name="food",
         description=f"목적지: {data.get('destination', '')}, 여행 기간: {data.get('start_date', '')} ~ {data.get('end_date', '')}, 인원수: {data.get('people', '')}, 여행 목적/특이사항: {data.get('purpose', '')}\n여행 일정 정보를 참고해서 추천 맛집 2~3곳을 안내해줘.",
@@ -91,17 +100,20 @@ def get_travel_plan_with_crew(data):
     )
     # Crew 생성 및 실행
     # 각 Task를 별도의 Crew로 실행하여 결과를 모두 반환
+    weather_crew = Crew(tasks=[weather_task])
     transport_crew = Crew(tasks=[transport_task])
     hotel_crew = Crew(tasks=[hotel_task])
     plan_crew = Crew(tasks=[plan_task])
     food_crew = Crew(tasks=[food_task])
 
+    weather_result = weather_crew.kickoff()
     transport_result = transport_crew.kickoff()
     hotel_result = hotel_crew.kickoff()
     plan_result = plan_crew.kickoff()
     food_result = food_crew.kickoff()
 
     return {
+        'weather': str(weather_result),
         'transport': str(transport_result),
         'hotel': str(hotel_result),
         'plan': str(plan_result),
