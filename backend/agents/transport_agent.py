@@ -18,8 +18,9 @@ llm = ChatOpenAI(model="gpt-3.5-turbo", api_key=OPENAI_API_KEY)
 
 transport_agent = Agent(
     role="여행 이동수단 추천 전문가",
-    goal="출발지에서 목적지까지의 최적 이동수단을 추천한다.",
-    backstory="여행 이동수단에 대한 다양한 정보를 알고 있으며, 사용자의 예산과 편의에 맞는 교통편을 추천한다.",
+    goal="출발지에서 목적지까지의 최적 이동수단을 추천한다. 반드시 검색 도구를 사용하여 실시간 정보를 수집해야 함.",
+    backstory="여행 이동수단에 대한 다양한 정보를 알고 있으며, 사용자의 예산과 편의에 맞는 교통편을 추천한다. 모든 추천은 검색 도구를 통해 얻은 최신 정보를 바탕으로 한다.",
+    tools=[search_tool],
     llm=llm,
     verbose=True
 )
@@ -106,6 +107,14 @@ def get_transport_plan(data):
 예산: {data.get('budget', '')}만원
 여행 목적/특이사항: {data.get('purpose', '')}
 
+**중요: 반드시 검색 도구를 사용하여 실시간 교통편 정보를 수집하세요. 추측하지 말고 검색 결과만 사용하세요.**
+
+검색해야 할 정보:
+1. {departure} {destination} 기차 시간표 KTX 요금
+2. {departure} {destination} 고속버스 시간표 요금
+3. {departure} {destination} 항공편 스케줄 요금
+4. {departure} {destination} 대중교통 지하철 버스 요금
+
 중요: 당신은 보조 도우미입니다. 추측하지 말고 일반적인 지식보다는 검색 도구를 통해 얻은 정보를 우선 사용하세요.
 
 아래 조건을 모두 반영해서 현실적으로 추천해줘.
@@ -120,7 +129,7 @@ def get_transport_plan(data):
 - 각 교통수단별로 예약 가능한 웹사이트 URL 포함
 - 일관된 구조: 교통수단 | 소요시간 | 예상비용 | 장점 | 단점 | 예약링크
 - 추천 우선순위 명시 (1순위, 2순위, 3순위)
-- 참고한 정보 출처 URL 반드시 포함
+- 참고한 정보 출처 URL 반드시 포함 (검색 도구로 찾은 실제 URL)
 
 [웹 검색 기반 교통편 정보]
 {web_search_info}
@@ -179,7 +188,7 @@ def get_enhanced_transport_plan(user_request):
         - 답변은 반드시 표 형태로 정리
         - 일관된 구조: 교통수단 | 소요시간 | 예상비용 | 장점 | 단점 | 예약링크
         - 추천 우선순위 명시 (1순위, 2순위, 3순위)
-        - 참고한 정보 출처 URL 반드시 포함
+        - 참고한 정보 출처 URL 반드시 포함 (검색 도구로 찾은 실제 URL)
         """,
         expected_output="비용 분석 결과와 예산별 추천 교통수단 Top 3 (시간, 비용, 편의성, 예약 URL 포함)",
         agent=cost_analyzer,
@@ -275,7 +284,7 @@ def get_hybrid_transport_plan(data):
         - 답변은 반드시 표 형태로 정리
         - 일관된 구조: 교통수단 | 소요시간 | 예상비용 | 장점 | 단점 | 예약링크
         - 추천 우선순위 명시 (1순위, 2순위, 3순위)
-        - 참고한 정보 출처 URL 반드시 포함
+        - 참고한 정보 출처 URL 반드시 포함 (검색 도구로 찾은 실제 URL)
         """,
         expected_output="비용 분석 결과와 예산별 추천 교통수단 Top 3 (시간, 비용, 편의성, 예약 URL 포함)",
         agent=cost_analyzer,
