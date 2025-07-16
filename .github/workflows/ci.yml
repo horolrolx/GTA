@@ -1,10 +1,39 @@
-name: Commit Message Validation
+name: CI Pipeline
 
 on:
+  push:
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black
+    
+    - name: Lint with flake8 (non-blocking)
+      run: |
+        echo "🔍 Running flake8 checks..."
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics || true
+        echo "ℹ️ Lint check completed (non-blocking)"
+    
+    - name: Check formatting with black (non-blocking)  
+      run: |
+        echo "🎨 Checking code formatting..."
+        black --check --diff . || echo "⚠️ Code formatting issues found, but not blocking"
+        
   commit-message-check:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
@@ -16,13 +45,45 @@ jobs:
     
     - name: Check commit messages
       run: |
-        # Check if commit messages follow Conventional Commits format
-        git log --format="%s" ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | while read msg; do
-          if ! echo "$msg" | grep -qE "^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .+"; then
-            echo "❌ Invalid commit message format: $msg"
-            echo "Please follow Conventional Commits format: type(scope): description"
-            exit 1
-          else
-            echo "✅ Valid commit message: $msg"
+        echo "🔍 Checking commit messages for Conventional Commits format..."
+        
+        # Get commit messages in the PR
+        COMMITS=$(git log --format="%H %s" ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
+        
+        # Pattern for Conventional Commits
+        PATTERN="^(feat|fix|docs|style|refactor|test|chore|build|ci|perf|revert)(\(.+\))?: .+"
+        
+        INVALID_COUNT=0
+        
+        while IFS= read -r line; do
+          if [ -n "$line" ]; then
+            COMMIT_HASH=$(echo "$line" | cut -d' ' -f1)
+            COMMIT_MSG=$(echo "$line" | cut -d' ' -f2-)
+            
+            if echo "$COMMIT_MSG" | grep -qE "$PATTERN"; then
+              echo "✅ Valid: $COMMIT_MSG"
+            else
+              echo "❌ Invalid: $COMMIT_MSG"
+              echo "   Commit: $COMMIT_HASH"
+              INVALID_COUNT=$((INVALID_COUNT + 1))
+            fi
           fi
-        done
+        done <<< "$COMMITS"
+        
+        if [ $INVALID_COUNT -gt 0 ]; then
+          echo ""
+          echo "🚨 Found $INVALID_COUNT invalid commit message(s)!"
+          echo ""
+          echo "📋 Conventional Commits 형식을 따라주세요:"
+          echo "   type(scope): description"
+          echo ""
+          echo "   Types: feat, fix, docs, style, refactor, test, chore"
+          echo "   Examples:"
+          echo "   - feat(auth): 소셜 로그인 기능 추가"
+          echo "   - fix(api): 사용자 정보 누락 문제 수정"
+          echo "   - docs: README.md 업데이트"
+          exit 1
+        else
+          echo ""
+          echo "🎉 All commit messages are valid!"
+        fi
