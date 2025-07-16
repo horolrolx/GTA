@@ -1,8 +1,59 @@
 from crewai import Agent, Task, Crew
 import os
-from .weather_agent import weather_agent
+import logging
+from datetime import datetime
+from .weather_agent import weather_agent, get_weather_plan
 
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+
+# 로깅 설정
+def setup_crew_logging():
+    """CrewAI 에이전트간 LLM 응답 로깅 설정"""
+    logger = logging.getLogger('crewai_llm_responses')
+    logger.setLevel(logging.INFO)
+    
+    if not logger.handlers:
+        # 파일 핸들러 추가
+        file_handler = logging.FileHandler('crew_llm_responses.log', encoding='utf-8')
+        file_handler.setLevel(logging.INFO)
+        
+        # 콘솔 핸들러 추가
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO)
+        
+        # 포맷터 설정
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+        file_handler.setFormatter(formatter)
+        console_handler.setFormatter(formatter)
+        
+        logger.addHandler(file_handler)
+        logger.addHandler(console_handler)
+    
+    return logger
+
+# 로거 초기화
+crew_logger = setup_crew_logging()
+
+def log_agent_interaction(agent_name, task_name, prompt, response, execution_time=None):
+    """에이전트 상호작용 로깅"""
+    log_message = f"""
+{'='*80}
+🤖 AGENT: {agent_name}
+📋 TASK: {task_name}
+⏰ TIME: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+{f'⚡ EXECUTION_TIME: {execution_time:.2f}초' if execution_time else ''}
+
+📤 PROMPT:
+{prompt}
+
+📥 RESPONSE:
+{response}
+{'='*80}
+"""
+    crew_logger.info(log_message)
 
 # 각 에이전트 정의
 transport_agent = Agent(
@@ -59,6 +110,8 @@ food_agent = Agent(
 )
 
 def get_travel_plan_with_crew(data):
+    crew_logger.info(f"🚀 여행 계획 생성 시작 - 목적지: {data.get('destination', '')}")
+    
     # 1. 날씨 정보 분석 (최우선)
     weather_task = Task(
         name="weather",
@@ -106,14 +159,80 @@ def get_travel_plan_with_crew(data):
     plan_crew = Crew(tasks=[plan_task])
     food_crew = Crew(tasks=[food_task])
 
-    weather_result = weather_crew.kickoff()
+    # 각 에이전트 실행 및 로깅
+    import time
+    
+    # 날씨 에이전트 실행 (실제 날씨 API 사용)
+    start_time = time.time()
+    crew_logger.info(f"🌤️  WeatherAgent 작업 시작 (실제 날씨 API 호출)")
+    weather_result = get_weather_plan(data)  # 실제 날씨 API 사용
+    weather_time = time.time() - start_time
+    log_agent_interaction(
+        agent_name="WeatherAgent",
+        task_name="weather_analysis_with_api",
+        prompt=f"목적지: {data.get('destination', '')}, 여행 기간: {data.get('start_date', '')} ~ {data.get('end_date', '')}, OpenWeatherMap API 호출",
+        response=str(weather_result),
+        execution_time=weather_time
+    )
+    
+    # 교통 에이전트 실행
+    start_time = time.time()
+    crew_logger.info(f"🚗 TransportAgent 작업 시작")
     transport_result = transport_crew.kickoff()
+    transport_time = time.time() - start_time
+    log_agent_interaction(
+        agent_name="TransportAgent", 
+        task_name="transport_recommendation",
+        prompt=transport_task.description,
+        response=str(transport_result),
+        execution_time=transport_time
+    )
+    
+    # 숙소 에이전트 실행
+    start_time = time.time()
+    crew_logger.info(f"🏨 HotelAgent 작업 시작")
     hotel_result = hotel_crew.kickoff()
+    hotel_time = time.time() - start_time
+    log_agent_interaction(
+        agent_name="HotelAgent",
+        task_name="hotel_recommendation", 
+        prompt=hotel_task.description,
+        response=str(hotel_result),
+        execution_time=hotel_time
+    )
+    
+    # 일정 에이전트 실행
+    start_time = time.time()
+    crew_logger.info(f"📅 PlanAgent 작업 시작")
     plan_result = plan_crew.kickoff()
+    plan_time = time.time() - start_time
+    log_agent_interaction(
+        agent_name="PlanAgent",
+        task_name="itinerary_planning",
+        prompt=plan_task.description,
+        response=str(plan_result),
+        execution_time=plan_time
+    )
+    
+    # 맛집 에이전트 실행
+    start_time = time.time() 
+    crew_logger.info(f"🍽️  FoodAgent 작업 시작")
     food_result = food_crew.kickoff()
+    food_time = time.time() - start_time
+    log_agent_interaction(
+        agent_name="FoodAgent",
+        task_name="restaurant_recommendation",
+        prompt=food_task.description,
+        response=str(food_result),
+        execution_time=food_time
+    )
+    
+    # 전체 실행 완료 로깅
+    total_time = weather_time + transport_time + hotel_time + plan_time + food_time
+    crew_logger.info(f"✅ 모든 에이전트 작업 완료 - 총 소요시간: {total_time:.2f}초")
 
     return {
-        'weather': str(weather_result),
+        'weather': str(weather_result.get('날씨', weather_result)),
         'transport': str(transport_result),
         'hotel': str(hotel_result),
         'plan': str(plan_result),

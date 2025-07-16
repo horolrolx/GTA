@@ -6,7 +6,12 @@ Good Travel Agent - Backend Server 실행 스크립트
 import os
 import sys
 from pathlib import Path
+from langchain_teddynote import logging
+from dotenv import load_dotenv
 
+load_dotenv()
+
+logging.langsmith("Travel_Agent")
 # 프로젝트 루트 디렉토리를 Python 경로에 추가
 project_root = Path(__file__).parent
 sys.path.append(str(project_root / "backend"))
