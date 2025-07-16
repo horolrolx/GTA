@@ -6,3 +6,5 @@ crewai
 openai
 python-dotenv
 langchain-naver-community
+crewai-tools
+serper-python
