@@ -208,3 +208,16 @@ pyrightconfig.json
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,git,python
+
+# Project specific
+crew_llm_responses.log
+*.log
+
+# IDE specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
