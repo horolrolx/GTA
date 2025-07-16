@@ -6,9 +6,15 @@ conda activate gta 환경에서 실행
 
 import sys
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 sys.path.append('/Users/songchangseok/Desktop/GTA/backend')
 
 from agents.transport_agent import get_transport_plan, get_enhanced_transport_plan, get_hybrid_transport_plan
+from agents.food_agent import get_food_plan, get_enhanced_food_plan, get_hybrid_food_plan
 from utils.crew_logger import crew_logger
 
 def test_transport_workflow():
@@ -45,6 +51,20 @@ def test_transport_workflow():
         print("\n3️⃣ 하이브리드 교통편 계획 테스트")
         result3 = get_hybrid_transport_plan(test_data)
         print(f"✅ 하이브리드 교통편 계획 완료: {len(str(result3))} 문자")
+        
+        # 4-6. 맛집 추천 테스트
+        print("\n4️⃣ 기본 맛집 추천 테스트")
+        result4 = get_food_plan(test_data)
+        print(f"✅ 기본 맛집 추천 완료: {len(str(result4))} 문자")
+        
+        print("\n5️⃣ 고도화 맛집 추천 테스트")
+        food_user_request = f"{test_data['destination']}에서 {test_data['people']}명이 먹을 수 있는 맛집 추천"
+        result5 = get_enhanced_food_plan(food_user_request)
+        print(f"✅ 고도화 맛집 추천 완료: {len(str(result5))} 문자")
+        
+        print("\n6️⃣ 하이브리드 맛집 추천 테스트")
+        result6 = get_hybrid_food_plan(test_data)
+        print(f"✅ 하이브리드 맛집 추천 완료: {len(str(result6))} 문자")
         
         print("\n" + "="*80)
         print("🎉 모든 워크플로우 테스트 완료!")

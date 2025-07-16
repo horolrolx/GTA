@@ -2,6 +2,10 @@ import os
 from crewai import Agent, Task, Crew, Process
 from crewai_tools import SerperDevTool
 from langchain_naver_community.utils import NaverSearchAPIWrapper
+from langchain_openai import ChatOpenAI
+import sys
+sys.path.append('/Users/songchangseok/Desktop/GTA/backend')
+from utils.crew_logger import crew_logger, log_function_execution, log_crew_workflow
 
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 SERPER_API_KEY = os.getenv('SERPER_API_KEY')
@@ -10,19 +14,14 @@ if SERPER_API_KEY:
     os.environ["SERPER_API_KEY"] = SERPER_API_KEY
 
 search_tool = SerperDevTool()
+llm = ChatOpenAI(model="gpt-3.5-turbo", api_key=OPENAI_API_KEY)
 
 food_agent = Agent(
-    name="FoodAgent",
     role="여행 맛집 추천 전문가",
     goal="여행 목적지의 대표 맛집을 추천한다.",
     backstory="여행지의 다양한 맛집 정보를 알고 있으며, 사용자의 취향에 맞는 맛집을 추천한다.",
-    llm_config={
-        "provider": "openai",
-        "config": {
-            "model": "gpt-3.5-turbo",
-            "api_key": OPENAI_API_KEY
-        }
-    }
+    llm=llm,
+    verbose=True
 )
 
 planner = Agent(
@@ -30,6 +29,7 @@ planner = Agent(
     goal="사용자의 모호한 맛집 요청을 분석하여 구체적인 검색 키워드와 실행 계획으로 변환",
     backstory="당신은 고객의 숨은 니즈까지 파악하는 베테랑 기획자로, "
               "어떤 요청이든 명확한 분석을 통해 실행 가능한 계획을 수립합니다.",
+    llm=llm,
     verbose=True,
     allow_delegation=False,
 )
@@ -40,6 +40,7 @@ searcher = Agent(
     backstory="당신은 최신 정보를 가장 빠르게 찾아내는 디지털 탐정입니다. "
               "광고와 실제 정보를 구분하는 날카로운 눈을 가지고 있습니다.",
     tools=[search_tool],
+    llm=llm,
     verbose=True,
     allow_delegation=False,
 )
@@ -49,6 +50,7 @@ analyst = Agent(
     goal="수집된 맛집 후보들의 리뷰, 평점 등을 심층 분석하여 최종 추천 리스트와 근거를 제시",
     backstory="당신은 수많은 리뷰 속에서 진짜 정보를 꿰뚫어 보는 데이터 분석가입니다. "
               "객관적인 데이터에 기반하여 최적의 맛집을 가려냅니다.",
+    llm=llm,
     verbose=True,
     allow_delegation=False,
 )
@@ -58,6 +60,7 @@ def naver_search(query):
     results = search.results(query)
     return results
 
+@log_function_execution("네이버_맛집_검색")
 def get_real_time_food_data(destination):
     query = f"{destination} 맛집 추천"
     results = naver_search(query)
@@ -66,10 +69,13 @@ def get_real_time_food_data(destination):
         summary += f"{i}. {item['title']} - {item['description']} (링크: {item['link']})\n"
     return summary
 
+@log_function_execution("기본_맛집_계획_생성")
 def get_food_plan(data):
     real_time_food = get_real_time_food_data(data.get('destination', ''))
+    destination = data.get('destination', '')
+    
     prompt = f"""
-목적지: {data.get('destination', '')}
+목적지: {destination}
 여행 기간: {data.get('start_date', '')} ~ {data.get('end_date', '')}
 인원수: {data.get('people', '')}
 여행 목적/특이사항: {data.get('purpose', '')}
@@ -91,9 +97,28 @@ def get_food_plan(data):
 [네이버 실시간 검색 결과]
 {real_time_food}
 """
-    result = food_agent.run(prompt)
+    
+    crew_logger.logger.info(f"🤖 기본 맛집 에이전트 실행: {destination}")
+    
+    # CrewAI Task와 Crew를 사용한 올바른 실행 방식
+    food_task = Task(
+        description=prompt,
+        expected_output="맛집 추천 결과 (표 형태로 정리)",
+        agent=food_agent,
+    )
+    
+    food_crew = Crew(
+        agents=[food_agent],
+        tasks=[food_task],
+        process=Process.sequential,
+        verbose=True,
+    )
+    
+    result = food_crew.kickoff()
+    crew_logger.logger.info(f"✅ 기본 맛집 에이전트 완료")
     return {'맛집': str(result)}
 
+@log_crew_workflow("고도화_맛집_크루")
 def get_enhanced_food_plan(user_request):
     plan_task = Task(
         description=f"사용자 요청 '{user_request}'을 분석하여, 검색에 사용할 핵심 조건(지역, 메뉴, 분위기, 인원)을 명확히 정리하고, 검색할 키워드 목록을 생성하라.",
@@ -134,12 +159,15 @@ def get_enhanced_food_plan(user_request):
         agents=[planner, searcher, analyst],
         tasks=[plan_task, search_task, analysis_task],
         process=Process.sequential,
-        verbose=2,
+        verbose=True,
     )
 
+    crew_logger.logger.info(f"🚀 고도화 맛집 크루 시작: {user_request}")
     result = matjip_crew.kickoff()
+    crew_logger.logger.info(f"✅ 고도화 맛집 크루 완료")
     return {'맛집': str(result)}
 
+@log_crew_workflow("하이브리드_맛집_크루")
 def get_hybrid_food_plan(data):
     destination = data.get('destination', '')
     
@@ -164,6 +192,7 @@ def get_hybrid_food_plan(data):
         backstory="당신은 네이버 검색 결과와 구글 검색을 모두 활용하여 최신 정보를 찾아내는 전문가입니다. "
                   "광고와 실제 정보를 구분하는 날카로운 눈을 가지고 있습니다.",
         tools=[search_tool],
+        llm=llm,
         verbose=True,
         allow_delegation=False,
     )
@@ -216,8 +245,10 @@ def get_hybrid_food_plan(data):
         agents=[planner, enhanced_searcher, analyst],
         tasks=[plan_task, hybrid_search_task, analysis_task],
         process=Process.sequential,
-        verbose=2,
+        verbose=True,
     )
 
+    crew_logger.logger.info(f"🚀 하이브리드 맛집 크루 시작: {destination}")
     result = hybrid_crew.kickoff()
+    crew_logger.logger.info(f"✅하이브리드 맛집 크루 완료")
     return {'맛집': str(result)}

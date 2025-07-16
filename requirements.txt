@@ -8,3 +8,4 @@ python-dotenv
 langchain-naver-community
 crewai-tools
 serper-python
+langchain-openai
