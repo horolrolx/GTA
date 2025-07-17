@@ -126,35 +126,35 @@ if submitted:
                         with tab1:
                             st.header("🌤️ 날씨 정보 및 준비물")
                             if 'weather' in travel_data:
-                                st.markdown(travel_data['weather'])
+                                st.markdown(travel_data['weather'], unsafe_allow_html=True)
                             else:
                                 st.info("날씨 정보를 불러오지 못했습니다.")
                         
                         with tab2:
                             st.header("🚗 교통편 추천")
                             if 'transport' in travel_data:
-                                st.markdown(travel_data['transport'])
+                                st.markdown(travel_data['transport'], unsafe_allow_html=True)
                             else:
                                 st.info("교통편 정보를 불러오지 못했습니다.")
                         
                         with tab3:
                             st.header("🏨 숙소 추천")
                             if 'hotel' in travel_data:
-                                st.markdown(travel_data['hotel'])
+                                st.markdown(travel_data['hotel'], unsafe_allow_html=True)
                             else:
                                 st.info("숙소 정보를 불러오지 못했습니다.")
                         
                         with tab4:
                             st.header("📅 여행 일정")
                             if 'plan' in travel_data:
-                                st.markdown(travel_data['plan'])
+                                st.markdown(travel_data['plan'], unsafe_allow_html=True)
                             else:
                                 st.info("일정 정보를 불러오지 못했습니다.")
                         
                         with tab5:
                             st.header("🍽️ 맛집 추천")
                             if 'food' in travel_data:
-                                st.markdown(travel_data['food'])
+                                st.markdown(travel_data['food'], unsafe_allow_html=True)
                             else:
                                 st.info("맛집 정보를 불러오지 못했습니다.")
                                 
