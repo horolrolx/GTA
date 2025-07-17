@@ -23,6 +23,7 @@ try:
         print("🚀 Good Travel Agent Backend Server 시작...")
         print("📍 서버 주소: http://localhost:5555")
         print("📖 API 문서:")
+        print("   - GET  /               : API 정보")
         print("   - GET  /health          : 서버 상태 확인")
         print("   - POST /plan            : 통합 여행 계획 생성")
         print("   - POST /weather         : 날씨 정보만 조회")

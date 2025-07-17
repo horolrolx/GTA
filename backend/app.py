@@ -10,6 +10,20 @@ CORS(app)  # CORS 허용
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+@app.route('/', methods=['GET'])
+def root():
+    """API 정보 엔드포인트"""
+    return jsonify({
+        "name": "Good Travel Agent API",
+        "version": "1.0.0",
+        "description": "여행 계획 생성을 위한 API 서비스",
+        "endpoints": {
+            "/health": "서버 상태 확인",
+            "/plan": "여행 플랜 생성 (POST)",
+            "/weather": "날씨 정보 조회 (POST)"
+        }
+    })
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """서버 상태 확인 엔드포인트"""

@@ -33,7 +33,7 @@ cp .env.example .env
 ```bash
 python run_backend.py
 ```
-- 서버 주소: http://localhost:5000
+- 서버 주소: http://localhost:5555
 - API 엔드포인트:
   - `GET /health`: 서버 상태 확인
   - `POST /plan`: 통합 여행 계획 생성
