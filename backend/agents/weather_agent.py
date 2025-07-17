@@ -100,42 +100,5 @@ def get_weather_data(destination, start_date, end_date):
     except Exception as e:
         return f"날씨 정보 조회 중 오류 발생: {str(e)}"
 
-def get_weather_plan(data):
-    """날씨 정보를 바탕으로 여행 준비 사항 추천"""
-    weather_info = get_weather_data(
-        data.get('destination', ''),
-        data.get('start_date', ''),
-        data.get('end_date', '')
-    )
-    
-    prompt = f"""
-목적지: {data.get('destination', '')}
-여행 기간: {data.get('start_date', '')} ~ {data.get('end_date', '')}
-인원수: {data.get('people', '')}
-여행 목적/특이사항: {data.get('purpose', '')}
-
-아래 조건을 모두 반영해서 현실적으로 추천해줘.
-- 실시간 날씨 예보(아래 참고)를 바탕으로 여행 기간 동안의 날씨 분석
-- 날씨에 맞는 옷차림 추천 (상의, 하의, 아우터, 신발, 악세서리 등)
-- 필수 준비물 (우산, 선크림, 모자, 선글라스, 보온용품 등)
-- 날씨로 인한 여행 시 주의사항 및 팁
-- 실내/실외 활동 비율 조정 제안
-- 표 형태로 정리 (날짜별 날씨, 추천 옷차림, 준비물)
-
-[실시간 날씨 예보]
-{weather_info}
-"""
-    # CrewAI Agent는 Task와 Crew를 통해 실행해야 함
-    from crewai import Task, Crew
-    
-    weather_task = Task(
-        name="weather_with_api",
-        description=prompt,
-        agent=weather_agent,
-        expected_output="날씨 정보와 여행 준비 사항이 포함된 상세 분석"
-    )
-    
-    weather_crew = Crew(tasks=[weather_task])
-    result = weather_crew.kickoff()
-    
-    return {'날씨': str(result)}
+# Only export agent object and helper functions for use by the central workflow
+# No Crew/Task orchestration here
