@@ -93,10 +93,24 @@ if submitted:
             'purpose': f"{purpose}. {special_notes}" if special_notes else purpose
         }
         
+        # 안내 메시지 표시
+        st.info("""
+        🤖 **AI 에이전트들이 협업하여 여행 계획을 생성하고 있습니다...**
+        
+        다음 전문가들이 순차적으로 작업합니다:
+        - 🌤️ 날씨 에이전트: 날씨 분석 및 준비물 추천
+        - 🚗 교통 에이전트: 최적 이동수단 검색
+        - 🏨 숙박 에이전트: 숙소 추천 및 분석
+        - 📅 일정 에이전트: 효율적인 동선 계획
+        - 🍽️ 맛집 에이전트: 현지 맛집 추천
+        
+        ⏱️ **소요 시간: 약 2-3분** (복잡한 요청일수록 시간이 더 걸릴 수 있습니다)
+        """)
+        
         # 로딩 표시
-        with st.spinner('🤖 AI 에이전트들이 최적의 여행 계획을 생성하고 있습니다...'):
+        with st.spinner('🔄 AI 에이전트들이 작업 중입니다... 잠시만 기다려주세요!'):
             try:
-                response = requests.post('http://localhost:5555/plan', json=data, timeout=120)
+                response = requests.post('http://localhost:5555/plan', json=data, timeout=300)
                 
                 if response.status_code == 200:
                     result = response.json()
@@ -152,7 +166,18 @@ if submitted:
                     st.error(f'❌ 서버 오류 (상태 코드: {response.status_code})')
                     
             except requests.exceptions.Timeout:
-                st.error('❌ 요청 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.')
+                st.error("""
+                ⏰ **요청 시간이 초과되었습니다.**
+                
+                AI 에이전트들이 매우 복잡한 분석을 수행하느라 예상보다 시간이 걸렸습니다.
+                
+                **해결 방법:**
+                1. 잠시 후 다시 시도해주세요
+                2. 목적지를 더 구체적으로 입력해보세요
+                3. 특이사항을 간단히 줄여보세요
+                
+                💡 일반적으로 2-3분 내에 완료되지만, 복잡한 요청의 경우 더 오래 걸릴 수 있습니다.
+                """)
             except requests.exceptions.ConnectionError:
                 st.error('❌ 서버에 연결할 수 없습니다. 백엔드 서버가 실행 중인지 확인해주세요.')
             except Exception as e:
