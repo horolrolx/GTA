@@ -7,18 +7,23 @@ services:
       dockerfile: Dockerfile.backend
     container_name: gta-backend
     ports:
+      # External port 5555 -> Container internal port 5555
+      # Access via: 10.10.10.51:5555 -> Container:5555
       - "5555:5555"
     env_file:
       - .env
     environment:
       - FLASK_ENV=production
       - PORT=5555
+      - HOST=0.0.0.0  # Allow external connections
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://localhost:5555/health').getcode()==200 else sys.exit(1)"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - gta-network
 
   frontend:
     build:
@@ -26,17 +31,24 @@ services:
       dockerfile: Dockerfile.frontend
     container_name: gta-frontend
     ports:
+      # External port 8501 -> Container internal port 8501
+      # Access via: 10.10.10.51:8501 -> Container:8501
       - "8501:8501"
     environment:
-      - BACKEND_URL=http://211.227.149.168:5555
-      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+      - BACKEND_URL=http://10.10.10.51:5555
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0  # Allow external connections
       - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_HEADLESS=true
+      - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
     depends_on:
       backend:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - gta-network
 
 networks:
-  default:
-    name: gta
+  gta-network:
+    driver: bridge
+    name: gta-network
 
