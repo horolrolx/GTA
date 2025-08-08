@@ -16,7 +16,47 @@ Good Travel Agent는 여행 계획에 필요한 모든 정보를 통합적으로
 
 ## 🚀 빠른 시작
 
-### 방법 1: Docker로 실행 (권장)
+### 방법 1: Python 직접 실행 (가장 간단)
+
+Docker 없이 Python으로 직접 실행하는 방법입니다.
+
+```bash
+# 1. 프로젝트 클론
+git clone https://github.com/horolrolx/GTA.git
+cd GTA
+
+# 2. Python 가상환경 생성 및 활성화
+python -m venv venv
+# Windows
+venv\Scripts\activate
+# macOS/Linux
+source venv/bin/activate
+
+# 3. 의존성 설치
+pip install -r requirements.txt
+
+# 4. 환경 변수 설정 (선택사항)
+cp .env.example .env
+# .env 파일을 열어서 필요한 API 키들을 설정
+
+# 5. 서버 실행 (두 가지 방법 중 선택)
+
+# 방법 A: 통합 실행 스크립트 (권장)
+python start_local.py
+
+# 방법 B: 개별 실행
+# 터미널 1: 백엔드 실행
+python run_backend.py
+
+# 터미널 2: 프론트엔드 실행
+python run_frontend.py
+```
+
+**접속 주소:**
+- 프론트엔드: http://localhost:8501
+- 백엔드 API: http://localhost:5555
+
+### 방법 2: Docker로 실행
 
 가장 간편한 방법으로, 모든 의존성이 포함된 Docker 이미지를 사용합니다.
 
@@ -37,7 +77,7 @@ docker compose up -d --build
 - 프론트엔드: http://localhost:8501
 - 백엔드 API: http://localhost:5555
 
-### 방법 2: 로컬 환경에서 실행
+### 방법 3: 로컬 환경에서 실행
 
 ```bash
 # 1. 프로젝트 클론
@@ -66,7 +106,7 @@ python run_backend.py
 python run_frontend.py
 ```
 
-### 방법 3: 프록스목스 배포
+### 방법 4: 프록스목스 배포
 
 프록스목스 서버에 배포하여 외부에서 접속 가능하게 설정:
 

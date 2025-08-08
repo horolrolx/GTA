@@ -21,7 +21,13 @@ try:
     
     if __name__ == '__main__':
         print("🚀 Good Travel Agent Backend Server 시작...")
-        print("📍 서버 주소: http://localhost:5555")
+        
+        # 로컬 실행을 위한 설정
+        port = int(os.getenv('PORT', '5555'))
+        host = os.getenv('HOST', 'localhost')
+        debug = os.getenv('FLASK_DEBUG', '1') == '1'
+        
+        print(f"📍 서버 주소: http://{host}:{port}")
         print("📖 API 문서:")
         print("   - GET  /               : API 정보")
         print("   - GET  /health          : 서버 상태 확인")
@@ -30,9 +36,7 @@ try:
         print("⏹️  서버 종료: Ctrl+C")
         print("-" * 50)
         
-        port = int(os.getenv('PORT', '5555'))
-        debug = os.getenv('FLASK_DEBUG', '1') == '1'
-        app.run(debug=debug, host='0.0.0.0', port=port)
+        app.run(debug=debug, host=host, port=port)
         
 except ImportError as e:
     print(f"❌ 모듈 임포트 오류: {e}")
