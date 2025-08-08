@@ -1,0 +1,30 @@
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /app
+
+# System deps (minimal). Uncomment if builds fail with native deps
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#     build-essential curl && rm -rf /var/lib/apt/lists/*
+
+# Install Python deps
+COPY requirements.txt ./
+RUN python -m pip install --upgrade pip && \
+    pip install -r requirements.txt
+
+# Copy app files (backend only + runner)
+COPY backend ./backend
+COPY run_backend.py ./
+
+EXPOSE 5555
+
+# Environment (override OPENAI_API_KEY at runtime)
+ENV FLASK_ENV=production \
+    PORT=5555
+
+# Use gunicorn for production serving
+CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:5555", "backend.app:app"]
+

@@ -2,6 +2,7 @@ from crewai import Agent
 import os
 from crewai_tools import SerperDevTool
 from langchain_openai import ChatOpenAI
+from backend.utils.crew_logger import crew_logger
 
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 SERPER_API_KEY = os.getenv('SERPER_API_KEY')
@@ -10,7 +11,8 @@ if SERPER_API_KEY:
     os.environ["SERPER_API_KEY"] = SERPER_API_KEY
 
 search_tool = SerperDevTool()
-llm = ChatOpenAI(model="gpt-3.5-turbo", api_key=OPENAI_API_KEY)
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
+llm = ChatOpenAI(model=OPENAI_MODEL, api_key=OPENAI_API_KEY)
 
 hotel_agent = Agent(
     name="HotelAgent",
@@ -69,7 +71,7 @@ def get_hotel_recommendations(city, checkin=None, checkout=None, people=None, bu
     query = " ".join(query_parts).strip()
     if not query or query == "호텔 추천" or query == f"{city} 호텔 추천":
         return "검색어가 비어있어 숙소 검색이 불가합니다."
-    print(f"[DEBUG] Serper 검색 쿼리: '{query}'")
+    crew_logger.logger.info(f"🔎 호텔 검색 쿼리 준비: '{query}'")
     # 검색 결과를 직접 가져오지 않고, 프롬프트에서 Agent가 검색 도구를 사용하도록 유도
     return query
 

@@ -9,3 +9,4 @@ langchain-naver-community
 crewai-tools
 langchain-openai
 langchain-teddynote
+gunicorn

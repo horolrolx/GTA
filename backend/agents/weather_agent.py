@@ -1,6 +1,7 @@
 from crewai import Agent
 import os
 import requests
+from typing import Optional
 
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
@@ -39,17 +40,20 @@ weather_agent = Agent(
     }
 )
 
-def get_weather_data(destination, start_date, end_date):
+def get_weather_data(destination: Optional[str], start_date: Optional[str], end_date: Optional[str]) -> str:
     """OpenWeatherMap API를 사용하여 날씨 정보 조회"""
     api_key = os.getenv("OPENWEATHER_API_KEY")
     if not api_key:
         return "날씨 API 키가 설정되지 않았습니다."
+    destination = (destination or "").strip()
+    if not destination:
+        return "목적지가 없어 날씨 정보를 조회할 수 없습니다."
     
     # 도시 이름을 좌표로 변환
     geocoding_url = f"http://api.openweathermap.org/geo/1.0/direct?q={destination}&limit=1&appid={api_key}"
     
     try:
-        geo_response = requests.get(geocoding_url)
+        geo_response = requests.get(geocoding_url, timeout=10)
         if geo_response.status_code != 200:
             return "도시 정보를 찾을 수 없습니다."
         
@@ -62,11 +66,11 @@ def get_weather_data(destination, start_date, end_date):
         
         # 현재 날씨 API 사용 (무료 플랜)
         current_url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units=metric&lang=kr"
-        current_response = requests.get(current_url)
+        current_response = requests.get(current_url, timeout=10)
         
         # 5일 예보 API 사용 (무료 플랜)
         forecast_url = f"https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={api_key}&units=metric&lang=kr"
-        forecast_response = requests.get(forecast_url)
+        forecast_response = requests.get(forecast_url, timeout=10)
         
         if current_response.status_code != 200 or forecast_response.status_code != 200:
             return f"날씨 정보를 가져올 수 없습니다. Current: {current_response.status_code}, Forecast: {forecast_response.status_code}"

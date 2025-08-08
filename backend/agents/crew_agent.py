@@ -2,10 +2,18 @@ from crewai import Task, Crew
 import logging
 from datetime import datetime
 from .weather_agent import weather_agent, get_weather_data
-from .transport_agent import transport_agent, route_planner, transport_searcher, cost_analyzer, get_web_transport_search, get_real_time_transport_search
+from .transport_agent import (
+    transport_agent,
+    route_planner,
+    transport_searcher,
+    cost_analyzer,
+    get_web_transport_search,
+    get_real_time_transport_search,
+)
 from .hotel_agent import hotel_agent, get_hotel_recommendations
 from .plan_agent import plan_agent
 from .food_agent import food_agent, planner, searcher, analyst, get_real_time_food_data
+from typing import Dict, Any
 
 # 로깅 설정
 
@@ -46,7 +54,7 @@ def log_agent_interaction(agent_name, task_name, prompt, response, execution_tim
 """
     crew_logger.info(log_message)
 
-def get_travel_plan_with_crew(data):
+def get_travel_plan_with_crew(data: Dict[str, Any]) -> Dict[str, str]:
     crew_logger.info(f"🚀 여행 계획 생성 시작 - 목적지: {data.get('destination', '')}")
     import time
     results = {}
@@ -128,10 +136,13 @@ def get_travel_plan_with_crew(data):
         expected_output="날짜별 날씨 예보, 추천 옷차림, 필수 준비물이 표로 정리된 결과"
     )
     weather_crew = Crew(tasks=[weather_task])
-    weather_result = weather_crew.kickoff()
+    try:
+        weather_result = weather_crew.kickoff()
+        results['weather'] = str(weather_result)
+    except Exception as e:
+        results['weather'] = f"날씨 분석 중 오류: {e}"
     weather_time = time.time() - start_time
-    log_agent_interaction("WeatherAgent", "weather_analysis", weather_prompt, str(weather_result), weather_time)
-    results['weather'] = str(weather_result)
+    log_agent_interaction("WeatherAgent", "weather_analysis", weather_prompt, str(results.get('weather')), weather_time)
 
     # 2. 교통 정보
     start_time = time.time()
@@ -230,10 +241,13 @@ def get_travel_plan_with_crew(data):
         expected_output="반드시 검색 도구를 사용하여 얻은 실시간 교통편 정보를 표 형식으로 제공. 검색하지 않은 추측 정보는 허용되지 않음"
     )
     transport_crew = Crew(tasks=[transport_task])
-    transport_result = transport_crew.kickoff()
+    try:
+        transport_result = transport_crew.kickoff()
+        results['transport'] = str(transport_result)
+    except Exception as e:
+        results['transport'] = f"교통편 추천 중 오류: {e}"
     transport_time = time.time() - start_time
-    log_agent_interaction("TransportAgent", "transport_recommendation", transport_prompt, str(transport_result), transport_time)
-    results['transport'] = str(transport_result)
+    log_agent_interaction("TransportAgent", "transport_recommendation", transport_prompt, str(results.get('transport')), transport_time)
 
     # 3. 숙소 정보
     start_time = time.time()
@@ -340,10 +354,13 @@ def get_travel_plan_with_crew(data):
         expected_output="추천 숙소 리스트, 위치, 가격대, 편의시설, 객실 타입이 표로 정리된 결과"
     )
     hotel_crew = Crew(tasks=[hotel_task])
-    hotel_result = hotel_crew.kickoff()
+    try:
+        hotel_result = hotel_crew.kickoff()
+        results['hotel'] = str(hotel_result)
+    except Exception as e:
+        results['hotel'] = f"숙박 추천 중 오류: {e}"
     hotel_time = time.time() - start_time
-    log_agent_interaction("HotelAgent", "hotel_recommendation", hotel_prompt, str(hotel_result), hotel_time)
-    results['hotel'] = str(hotel_result)
+    log_agent_interaction("HotelAgent", "hotel_recommendation", hotel_prompt, str(results.get('hotel')), hotel_time)
 
     # 4. 일정 정보
     start_time = time.time()
@@ -438,10 +455,13 @@ def get_travel_plan_with_crew(data):
         expected_output="1일 단위 여행 일정, 각 일정별 소요 시간, 추천 이유, 참고 팁이 표로 정리된 결과"
     )
     plan_crew = Crew(tasks=[plan_task])
-    plan_result = plan_crew.kickoff()
+    try:
+        plan_result = plan_crew.kickoff()
+        results['plan'] = str(plan_result)
+    except Exception as e:
+        results['plan'] = f"일정 설계 중 오류: {e}"
     plan_time = time.time() - start_time
-    log_agent_interaction("PlanAgent", "itinerary_planning", plan_prompt, str(plan_result), plan_time)
-    results['plan'] = str(plan_result)
+    log_agent_interaction("PlanAgent", "itinerary_planning", plan_prompt, str(results.get('plan')), plan_time)
 
     # 5. 맛집 정보
     start_time = time.time()
@@ -549,10 +569,13 @@ def get_travel_plan_with_crew(data):
         expected_output="아침/점심/저녁별 추천 맛집, 위치, 가격대, 대표 메뉴, 평점이 표로 정리된 결과"
     )
     food_crew = Crew(tasks=[food_task])
-    food_result = food_crew.kickoff()
+    try:
+        food_result = food_crew.kickoff()
+        results['food'] = str(food_result)
+    except Exception as e:
+        results['food'] = f"맛집 추천 중 오류: {e}"
     food_time = time.time() - start_time
-    log_agent_interaction("FoodAgent", "restaurant_recommendation", food_prompt, str(food_result), food_time)
-    results['food'] = str(food_result)
+    log_agent_interaction("FoodAgent", "restaurant_recommendation", food_prompt, str(results.get('food')), food_time)
 
     total_time = weather_time + transport_time + hotel_time + plan_time + food_time
     crew_logger.info(f"✅ 모든 에이전트 작업 완료 - 총 소요시간: {total_time:.2f}초")

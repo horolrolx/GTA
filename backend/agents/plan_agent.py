@@ -2,6 +2,7 @@ from crewai import Agent
 import os
 
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-3.5-turbo')
 
 plan_agent = Agent(
     name="PlanAgent",
@@ -42,7 +43,7 @@ plan_agent = Agent(
     llm_config={
         "provider": "openai",
         "config": {
-            "model": "gpt-3.5-turbo",
+            "model": OPENAI_MODEL,
             "api_key": OPENAI_API_KEY
         }
     }

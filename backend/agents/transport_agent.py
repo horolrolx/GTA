@@ -1,11 +1,8 @@
 import os
-import requests
 from crewai import Agent
 from crewai_tools import SerperDevTool
 from langchain_openai import ChatOpenAI
-import sys
-sys.path.append('/Users/songchangseok/Desktop/GTA/backend')
-from utils.crew_logger import crew_logger, log_function_execution
+from backend.utils.crew_logger import crew_logger, log_function_execution
 
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 SERPER_API_KEY = os.getenv('SERPER_API_KEY')
@@ -14,7 +11,8 @@ if SERPER_API_KEY:
     os.environ["SERPER_API_KEY"] = SERPER_API_KEY
 
 search_tool = SerperDevTool()
-llm = ChatOpenAI(model="gpt-3.5-turbo", api_key=OPENAI_API_KEY)
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
+llm = ChatOpenAI(model=OPENAI_MODEL, api_key=OPENAI_API_KEY)
 
 transport_agent = Agent(
     role="여행 교통편 분석 및 최적화 전문가",

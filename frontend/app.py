@@ -2,6 +2,7 @@ import streamlit as st
 from datetime import date, timedelta
 import requests
 import json
+import os
 
 # 페이지 설정
 st.set_page_config(
@@ -10,6 +11,9 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Backend API base URL (overridable via env var for Docker/K8s)
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:5555")
 
 st.title('✈️ Good Travel Agent - 맞춤형 여행 계획')
 st.subheader('여행지, 예산, 선호도를 고려한 통합 여행 추천 시스템')
@@ -110,7 +114,7 @@ if submitted:
         # 로딩 표시
         with st.spinner('🔄 AI 에이전트들이 작업 중입니다... 잠시만 기다려주세요!'):
             try:
-                response = requests.post('http://localhost:5555/plan', json=data, timeout=300)
+                response = requests.post(f"{BACKEND_URL}/plan", json=data, timeout=300)
                 
                 if response.status_code == 200:
                     result = response.json()

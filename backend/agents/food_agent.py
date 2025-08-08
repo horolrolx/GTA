@@ -3,9 +3,7 @@ from crewai import Agent
 from crewai_tools import SerperDevTool
 from langchain_naver_community.utils import NaverSearchAPIWrapper
 from langchain_openai import ChatOpenAI
-import sys
-sys.path.append('/Users/songchangseok/Desktop/GTA/backend')
-from utils.crew_logger import crew_logger, log_function_execution
+from backend.utils.crew_logger import crew_logger, log_function_execution
 
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 SERPER_API_KEY = os.getenv('SERPER_API_KEY')
@@ -14,7 +12,8 @@ if SERPER_API_KEY:
     os.environ["SERPER_API_KEY"] = SERPER_API_KEY
 
 search_tool = SerperDevTool()
-llm = ChatOpenAI(model="gpt-3.5-turbo", api_key=OPENAI_API_KEY)
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
+llm = ChatOpenAI(model=OPENAI_MODEL, api_key=OPENAI_API_KEY)
 
 food_agent = Agent(
     role="여행지 맛집 분석 및 미식 여행 큐레이션 전문가",
@@ -95,18 +94,30 @@ analyst = Agent(
 )
 
 def naver_search(query):
-    search = NaverSearchAPIWrapper()
-    results = search.results(query)
-    return results
+    try:
+        search = NaverSearchAPIWrapper()
+        results = search.results(query)
+        return results
+    except Exception as e:
+        crew_logger.log_error("naver_search_error", str(e))
+        return []
 
 @log_function_execution("네이버_맛집_검색")
 def get_real_time_food_data(destination):
+    destination = (destination or '').strip()
+    if not destination:
+        return "목적지가 없어 맛집 검색을 수행할 수 없습니다."
     query = f"{destination} 맛집 추천"
     results = naver_search(query)
-    summary = ""
+    if not results:
+        return "실시간 맛집 데이터를 가져오지 못했습니다."
+    summary_lines = []
     for i, item in enumerate(results[:3], 1):
-        summary += f"{i}. {item['title']} - {item['description']} (링크: {item['link']})\n"
-    return summary
+        title = item.get('title', 'N/A')
+        desc = item.get('description', '')
+        link = item.get('link', '')
+        summary_lines.append(f"{i}. {title} - {desc} (링크: {link})")
+    return "\n".join(summary_lines)
 
 # Only export agent objects and helper functions for use by the central workflow
 # No Crew/Task orchestration here

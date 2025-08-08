@@ -12,9 +12,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 logging.langsmith("Travel_Agent")
-# 프로젝트 루트 디렉토리를 Python 경로에 추가
+# 프로젝트 루트 디렉토리를 Python 경로에 추가 (backend 상위 경로)
 project_root = Path(__file__).parent
-sys.path.append(str(project_root / "backend"))
+sys.path.append(str(project_root))
 
 try:
     from backend.app import app
@@ -30,7 +30,9 @@ try:
         print("⏹️  서버 종료: Ctrl+C")
         print("-" * 50)
         
-        app.run(debug=True, host='0.0.0.0', port=5555)
+        port = int(os.getenv('PORT', '5555'))
+        debug = os.getenv('FLASK_DEBUG', '1') == '1'
+        app.run(debug=debug, host='0.0.0.0', port=port)
         
 except ImportError as e:
     print(f"❌ 모듈 임포트 오류: {e}")

@@ -45,6 +45,31 @@ python run_frontend.py
 ```
 - 웹 주소: http://localhost:8501
 
+## 🐳 Docker로 실행
+
+Docker와 Docker Compose로 백엔드와 프론트엔드를 손쉽게 실행할 수 있습니다.
+
+### 사전 준비
+- Docker Desktop 설치 (Compose v2 포함)
+
+### 빠른 실행
+```bash
+docker compose up -d --build
+```
+
+접속 주소:
+- 백엔드 API: http://localhost:5555
+- 프론트엔드 UI: http://localhost:8501
+
+환경 변수:
+- `OPENAI_API_KEY`: 에이전트용 OpenAI 키 (필수)
+- `BACKEND_URL`: 프론트엔드에서 호출할 백엔드 주소 (기본: `http://backend:5555`)
+
+중지:
+```bash
+docker compose down
+```
+
 ## 🛠️ 프로젝트 구조
 
 ```
@@ -73,6 +98,7 @@ GTA/
 
 ### 필수 API 키
 - **OpenAI API Key**: AI 에이전트들의 언어 모델 사용
+ - **SERPER_API_KEY**: 웹 검색 도구(Serper) 사용
 
 ### 선택적 API 키 (더 나은 추천을 위해)
 - **OpenWeatherMap API**: 실시간 날씨 정보
@@ -82,6 +108,7 @@ GTA/
 `.env` 파일 예시:
 ```env
 OPENAI_API_KEY=your_openai_api_key_here
+SERPER_API_KEY=your_serper_api_key_here
 OPENWEATHER_API_KEY=your_openweather_api_key_here
 NAVER_CLIENT_ID=your_naver_client_id_here
 NAVER_CLIENT_SECRET=your_naver_client_secret_here
