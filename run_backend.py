@@ -22,12 +22,13 @@ try:
     if __name__ == '__main__':
         print("🚀 Good Travel Agent Backend Server 시작...")
         
-        # 로컬 실행을 위한 설정
+        # 외부 접속을 위한 설정
         port = int(os.getenv('PORT', '5555'))
-        host = os.getenv('HOST', 'localhost')
+        host = os.getenv('HOST', '0.0.0.0')  # 외부 접속을 위해 0.0.0.0으로 변경
         debug = os.getenv('FLASK_DEBUG', '1') == '1'
         
         print(f"📍 서버 주소: http://{host}:{port}")
+        print(f"🌐 외부 접속 주소: http://10.10.10.51:{port}")
         print("📖 API 문서:")
         print("   - GET  /               : API 정보")
         print("   - GET  /health          : 서버 상태 확인")
