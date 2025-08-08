@@ -66,6 +66,27 @@ python run_backend.py
 python run_frontend.py
 ```
 
+### 방법 3: 프록스목스 배포
+
+프록스목스 서버에 배포하여 외부에서 접속 가능하게 설정:
+
+```bash
+# 1. 서버에 프로젝트 업로드
+git clone https://github.com/horolrolx/GTA.git
+cd GTA
+
+# 2. 환경 변수 설정
+cp .env.example .env
+# .env 파일 편집
+
+# 3. Docker Compose로 실행
+docker compose up -d --build
+```
+
+**접속 주소:**
+- 프론트엔드: http://211.227.149.168:8501
+- 백엔드 API: http://211.227.149.168:5555
+
 ## 🔧 환경 변수 설정
 
 프로젝트를 완전히 사용하려면 다음 API 키들이 필요합니다:
@@ -95,7 +116,7 @@ VISITKOREA_API_KEY=your_visitkorea_api_key_here
 
 ## 💡 사용 방법
 
-1. **프론트엔드 접속**: http://localhost:8501
+1. **프론트엔드 접속**: http://localhost:8501 (로컬) 또는 http://211.227.149.168:8501 (프록스목스)
 2. **여행 정보 입력**:
    - 출발지와 목적지
    - 여행 기간
@@ -248,6 +269,23 @@ docker compose -f docker-compose.yml up -d --build
 docker compose config
 ```
 
+### 프록스목스 배포
+```bash
+# 서버에 프로젝트 업로드
+git clone https://github.com/horolrolx/GTA.git
+cd GTA
+
+# 환경 변수 설정
+cp .env.example .env
+# .env 파일 편집
+
+# Docker Compose로 실행
+docker compose up -d --build
+
+# 접속 확인
+curl http://211.227.149.168:8501
+```
+
 ### 클라우드 배포
 - **AWS**: ECS 또는 EC2 + Docker
 - **GCP**: Cloud Run 또는 GKE
@@ -286,6 +324,7 @@ docker compose config
 - ✅ 크로스 플랫폼 호환성 확보
 - ✅ 헬스체크 및 의존성 관리
 - ✅ 프로덕션급 서버 설정 (Gunicorn)
+- ✅ 프록스목스 배포 지원 추가
 
 ---
 

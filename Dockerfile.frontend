@@ -15,8 +15,10 @@ COPY run_frontend.py ./
 
 EXPOSE 8501
 
-# The frontend needs to know backend endpoint inside compose network
-ENV BACKEND_URL=http://backend:5555
+# 프록스목스 배포를 위한 환경 변수 설정
+ENV BACKEND_URL=http://211.227.149.168:5555 \
+    STREAMLIT_SERVER_ADDRESS=0.0.0.0 \
+    STREAMLIT_SERVER_PORT=8501
 
 CMD ["python", "run_frontend.py"]
 

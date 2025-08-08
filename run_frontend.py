@@ -12,9 +12,13 @@ def run_streamlit():
     """Streamlit 프론트엔드 실행"""
     frontend_path = Path(__file__).parent / "frontend" / "app.py"
     
+    # 프록스목스 배포를 위한 환경 변수 설정
+    server_address = os.getenv("STREAMLIT_SERVER_ADDRESS", "0.0.0.0")
+    server_port = os.getenv("STREAMLIT_SERVER_PORT", "8501")
+    
     try:
         print("🚀 Good Travel Agent Frontend 시작...")
-        print("📍 웹 주소: http://localhost:8501")
+        print(f"📍 웹 주소: http://{server_address}:{server_port}")
         print("⏹️  서버 종료: Ctrl+C")
         print("-" * 50)
         
@@ -22,8 +26,8 @@ def run_streamlit():
         subprocess.run([
             sys.executable, "-m", "streamlit", "run", 
             str(frontend_path),
-            "--server.port", "8501",
-            "--server.address", "0.0.0.0"
+            "--server.port", server_port,
+            "--server.address", server_address
         ])
         
     except KeyboardInterrupt:

@@ -1,0 +1,3 @@
+[33m104c91c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m docs: 한글 README 완전 재작성
+[33m2c17193[m feat: Add Docker support and improve agent reliability
+[33m455c7a2[m fix: enforce mandatory search tool usage for all AI agents
